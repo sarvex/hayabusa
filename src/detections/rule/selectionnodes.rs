@@ -1,5 +1,4 @@
 use crate::detections::{configs::EventKeyAliasConfig, detection::EvtxRecordInfo, utils};
-use downcast_rs::Downcast;
 use nested::Nested;
 use serde_json::Value;
 use std::{sync::Arc, vec};
@@ -7,8 +6,59 @@ use yaml_rust::Yaml;
 
 use super::matchers::{self, DefaultMatcher};
 
+pub enum SelectionNodeEnum {
+    And(AndSelectionNode),
+    Or(OrSelectionNode),
+    Not(NotSelectionNode),
+    Ref(RefSelectionNode),
+    Leaf(LeafSelectionNode),
+}
+
+impl SelectionNodeEnum {
+    pub fn init(&mut self) -> Result<(), Vec<String>> {
+        match self {
+            SelectionNodeEnum::And(node) => node.init(),
+            SelectionNodeEnum::Or(node) => node.init(),
+            SelectionNodeEnum::Not(node) => node.init(),
+            SelectionNodeEnum::Ref(node) => node.init(),
+            SelectionNodeEnum::Leaf(node) => node.init(),
+        }
+    }
+
+    pub fn select(
+        &self,
+        event_record: &EvtxRecordInfo,
+        eventkey_alias: &EventKeyAliasConfig,
+    ) -> bool {
+        match self {
+            SelectionNodeEnum::And(node) => node.select(event_record, eventkey_alias),
+            SelectionNodeEnum::Or(node) => node.select(event_record, eventkey_alias),
+            SelectionNodeEnum::Not(node) => node.select(event_record, eventkey_alias),
+            SelectionNodeEnum::Ref(node) => node.select(event_record, eventkey_alias),
+            SelectionNodeEnum::Leaf(node) => node.select(event_record, eventkey_alias),
+        }
+    }
+
+    pub fn get_descendants(&self) -> Vec<&SelectionNodeEnum> {
+        match self {
+            SelectionNodeEnum::And(node) => node.get_descendants(),
+            SelectionNodeEnum::Or(node) => node.get_descendants(),
+            SelectionNodeEnum::Not(node) => node.get_descendants(),
+            SelectionNodeEnum::Ref(node) => node.get_descendants(),
+            SelectionNodeEnum::Leaf(node) => node.get_descendants(),
+        }
+    }
+
+    pub fn get_keys(&self) -> Vec<&String> {
+        match self {
+            SelectionNodeEnum::Leaf(node) => node.get_keys(),
+            _ => vec![],
+        }
+    }
+}
+
 // Ruleファイルの detection- selection配下のノードはこのtraitを実装する。
-pub trait SelectionNode: Downcast {
+pub trait SelectionNode {
     // 引数で指定されるイベントログのレコードが、条件に一致するかどうかを判定する
     // このトレイトを実装する構造体毎に適切な判定処理を書く必要がある。
     fn select(&self, event_record: &EvtxRecordInfo, eventkey_alias: &EventKeyAliasConfig) -> bool;
@@ -20,16 +70,15 @@ pub trait SelectionNode: Downcast {
     fn init(&mut self) -> Result<(), Vec<String>>;
 
     // 子ノードを取得する(グラフ理論のchildと同じ意味)
-    fn get_childs(&self) -> Vec<&dyn SelectionNode>;
+    fn get_childs(&self) -> Vec<&SelectionNodeEnum>;
 
     // 子孫ノードを取得する(グラフ理論のdescendantと同じ意味)
-    fn get_descendants(&self) -> Vec<&dyn SelectionNode>;
+    fn get_descendants(&self) -> Vec<&SelectionNodeEnum>;
 }
-downcast_rs::impl_downcast!(SelectionNode);
 
 /// detection - selection配下でAND条件を表すノード
 pub struct AndSelectionNode {
-    pub child_nodes: Vec<Box<dyn SelectionNode>>,
+    pub child_nodes: Vec<SelectionNodeEnum>,
 }
 
 impl AndSelectionNode {
@@ -74,16 +123,16 @@ impl SelectionNode for AndSelectionNode {
         }
     }
 
-    fn get_childs(&self) -> Vec<&dyn SelectionNode> {
+    fn get_childs(&self) -> Vec<&SelectionNodeEnum> {
         let mut ret = vec![];
         self.child_nodes.iter().for_each(|child_node| {
-            ret.push(child_node.as_ref());
+            ret.push(child_node);
         });
 
         ret
     }
 
-    fn get_descendants(&self) -> Vec<&dyn SelectionNode> {
+    fn get_descendants(&self) -> Vec<&SelectionNodeEnum> {
         let mut ret = self.get_childs();
 
         self.child_nodes
@@ -99,7 +148,7 @@ impl SelectionNode for AndSelectionNode {
 
 /// detection - selection配下でOr条件を表すノード
 pub struct OrSelectionNode {
-    pub child_nodes: Vec<Box<dyn SelectionNode>>,
+    pub child_nodes: Vec<SelectionNodeEnum>,
 }
 
 impl OrSelectionNode {
@@ -144,16 +193,16 @@ impl SelectionNode for OrSelectionNode {
         }
     }
 
-    fn get_childs(&self) -> Vec<&dyn SelectionNode> {
+    fn get_childs(&self) -> Vec<&SelectionNodeEnum> {
         let mut ret = vec![];
         self.child_nodes.iter().for_each(|child_node| {
-            ret.push(child_node.as_ref());
+            ret.push(child_node);
         });
 
         ret
     }
 
-    fn get_descendants(&self) -> Vec<&dyn SelectionNode> {
+    fn get_descendants(&self) -> Vec<&SelectionNodeEnum> {
         let mut ret = self.get_childs();
 
         self.child_nodes
@@ -169,11 +218,11 @@ impl SelectionNode for OrSelectionNode {
 
 /// conditionでNotを表すノード
 pub struct NotSelectionNode {
-    node: Box<dyn SelectionNode>,
+    node: Box<SelectionNodeEnum>,
 }
 
 impl NotSelectionNode {
-    pub fn new(select_node: Box<dyn SelectionNode>) -> NotSelectionNode {
+    pub fn new(select_node: Box<SelectionNodeEnum>) -> NotSelectionNode {
         NotSelectionNode { node: select_node }
     }
 }
@@ -187,11 +236,11 @@ impl SelectionNode for NotSelectionNode {
         Result::Ok(())
     }
 
-    fn get_childs(&self) -> Vec<&dyn SelectionNode> {
+    fn get_childs(&self) -> Vec<&SelectionNodeEnum> {
         vec![]
     }
 
-    fn get_descendants(&self) -> Vec<&dyn SelectionNode> {
+    fn get_descendants(&self) -> Vec<&SelectionNodeEnum> {
         self.get_childs()
     }
 }
@@ -201,11 +250,11 @@ pub struct RefSelectionNode {
     // selection_nodeはDetectionNodeのname_2_nodeが所有権を持っていて、RefSelectionNodeのselection_nodeに所有権を持たせることができない。
     // そこでArcを使って、DetectionNodeのname_2_nodeとRefSelectionNodeのselection_nodeで所有権を共有する。
     // RcじゃなくてArcなのはマルチスレッド対応のため
-    selection_node: Arc<Box<dyn SelectionNode>>,
+    selection_node: Arc<SelectionNodeEnum>,
 }
 
 impl RefSelectionNode {
-    pub fn new(select_node: Arc<Box<dyn SelectionNode>>) -> RefSelectionNode {
+    pub fn new(select_node: Arc<SelectionNodeEnum>) -> RefSelectionNode {
         RefSelectionNode {
             selection_node: select_node,
         }
@@ -221,11 +270,11 @@ impl SelectionNode for RefSelectionNode {
         Result::Ok(())
     }
 
-    fn get_childs(&self) -> Vec<&dyn SelectionNode> {
-        vec![self.selection_node.as_ref().as_ref()]
+    fn get_childs(&self) -> Vec<&SelectionNodeEnum> {
+        vec![self.selection_node.as_ref()]
     }
 
-    fn get_descendants(&self) -> Vec<&dyn SelectionNode> {
+    fn get_descendants(&self) -> Vec<&SelectionNodeEnum> {
         self.get_childs()
     }
 }
@@ -419,11 +468,11 @@ impl SelectionNode for LeafSelectionNode {
             .init(&self.key_list, &self.select_value);
     }
 
-    fn get_childs(&self) -> Vec<&dyn SelectionNode> {
+    fn get_childs(&self) -> Vec<&SelectionNodeEnum> {
         vec![]
     }
 
-    fn get_descendants(&self) -> Vec<&dyn SelectionNode> {
+    fn get_descendants(&self) -> Vec<&SelectionNodeEnum> {
         vec![]
     }
 }

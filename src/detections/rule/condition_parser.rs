@@ -1,10 +1,9 @@
 use lazy_static::lazy_static;
 use regex::Regex;
 
-use self::selectionnodes::{
-    AndSelectionNode, NotSelectionNode, OrSelectionNode, RefSelectionNode, SelectionNode,
-};
+use self::selectionnodes::{AndSelectionNode, NotSelectionNode, OrSelectionNode, RefSelectionNode};
 use super::selectionnodes;
+use crate::detections::rule::selectionnodes::SelectionNodeEnum;
 use hashbrown::HashMap;
 use std::{sync::Arc, vec::IntoIter};
 
@@ -116,8 +115,8 @@ impl ConditionCompiler {
     pub fn compile_condition(
         &self,
         condition_str: &str,
-        name_2_node: &HashMap<String, Arc<Box<dyn SelectionNode>>>,
-    ) -> Result<Box<dyn SelectionNode>, String> {
+        name_2_node: &HashMap<String, Arc<SelectionNodeEnum>>,
+    ) -> Result<SelectionNodeEnum, String> {
         // パイプはここでは処理しない
         let captured = self::RE_PIPE.captures(condition_str);
         let replaced_condition = if let Some(cap) = captured {
@@ -139,8 +138,8 @@ impl ConditionCompiler {
     fn compile_condition_body(
         &self,
         condition_str: &str,
-        name_2_node: &HashMap<String, Arc<Box<dyn SelectionNode>>>,
-    ) -> Result<Box<dyn SelectionNode>, String> {
+        name_2_node: &HashMap<String, Arc<SelectionNodeEnum>>,
+    ) -> Result<SelectionNodeEnum, String> {
         let tokens = self.tokenize(condition_str)?;
 
         let parsed = self.parse(tokens.into_iter())?;
@@ -402,8 +401,8 @@ impl ConditionCompiler {
     /// ConditionTokenからSelectionNodeトレイトを実装した構造体に変換します。
     fn to_selectnode(
         token: ConditionToken,
-        name_2_node: &HashMap<String, Arc<Box<dyn SelectionNode>>>,
-    ) -> Result<Box<dyn SelectionNode>, String> {
+        name_2_node: &HashMap<String, Arc<SelectionNodeEnum>>,
+    ) -> Result<SelectionNodeEnum, String> {
         // RefSelectionNodeに変換
         if let ConditionToken::SelectionReference(selection_name) = token {
             let selection_node = name_2_node.get(&selection_name);
@@ -411,7 +410,7 @@ impl ConditionCompiler {
                 let selection_node = select_node;
                 let selection_node = Arc::clone(selection_node);
                 let ref_node = RefSelectionNode::new(selection_node);
-                return Result::Ok(Box::new(ref_node));
+                return Result::Ok(SelectionNodeEnum::Ref(ref_node));
             } else {
                 let err_msg = format!("{selection_name} is not defined.");
                 return Result::Err(err_msg);
@@ -425,7 +424,7 @@ impl ConditionCompiler {
                 let sub_node = Self::to_selectnode(sub_token, name_2_node)?;
                 select_and_node.child_nodes.push(sub_node);
             }
-            return Result::Ok(Box::new(select_and_node));
+            return Result::Ok(SelectionNodeEnum::And(select_and_node));
         }
 
         // OrSelectionNodeに変換
@@ -435,7 +434,7 @@ impl ConditionCompiler {
                 let sub_node = Self::to_selectnode(sub_token, name_2_node)?;
                 select_or_node.child_nodes.push(sub_node);
             }
-            return Result::Ok(Box::new(select_or_node));
+            return Result::Ok(SelectionNodeEnum::Or(select_or_node));
         }
 
         // NotSelectionNodeに変換
@@ -446,8 +445,8 @@ impl ConditionCompiler {
 
             let select_sub_node =
                 Self::to_selectnode(sub_tokens.into_iter().next().unwrap(), name_2_node)?;
-            let select_not_node = NotSelectionNode::new(select_sub_node);
-            return Result::Ok(Box::new(select_not_node));
+            let select_not_node = NotSelectionNode::new(Box::new(select_sub_node));
+            return Result::Ok(SelectionNodeEnum::Not(select_not_node));
         }
 
         Result::Err("Unknown error".to_string())

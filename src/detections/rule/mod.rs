@@ -6,12 +6,12 @@ use hashbrown::HashMap;
 use nested::Nested;
 use std::{fmt::Debug, sync::Arc, vec};
 
+use crate::detections::rule::selectionnodes::SelectionNodeEnum;
 use yaml_rust::Yaml;
 
+mod aggregation_parser;
 mod matchers;
 mod selectionnodes;
-use self::selectionnodes::{LeafSelectionNode, SelectionNode};
-mod aggregation_parser;
 use self::aggregation_parser::AggregationParseInfo;
 
 mod condition_parser;
@@ -124,11 +124,11 @@ pub fn get_detection_keys(node: &RuleNode) -> Nested<String> {
         let selection = &detection.name_to_selection[key];
         let desc = selection.get_descendants();
         desc.iter().for_each(|node| {
-            if !node.is::<LeafSelectionNode>() {
+            if !matches!(node, SelectionNodeEnum::Leaf(_)) {
                 return;
             }
 
-            let node = node.downcast_ref::<LeafSelectionNode>().unwrap();
+            //let node = node.downcast_ref::<LeafSelectionNode>().unwrap();
             let keys = node.get_keys();
             let keys = keys.iter().filter_map(|key| {
                 if key.is_empty() {
@@ -145,8 +145,8 @@ pub fn get_detection_keys(node: &RuleNode) -> Nested<String> {
 
 /// Ruleファイルのdetectionを表すノード
 struct DetectionNode {
-    pub name_to_selection: HashMap<String, Arc<Box<dyn SelectionNode>>>,
-    pub condition: Option<Box<dyn SelectionNode>>,
+    pub name_to_selection: HashMap<String, Arc<SelectionNodeEnum>>,
+    pub condition: Option<SelectionNodeEnum>,
     pub aggregation_condition: Option<AggregationParseInfo>,
     pub timeframe: Option<TimeFrameInfo>,
 }
@@ -229,7 +229,7 @@ impl DetectionNode {
             return false;
         }
 
-        let condition = &self.condition.as_ref().unwrap();
+        let condition: &SelectionNodeEnum = &self.condition.as_ref().unwrap();
         condition.select(event_record, eventkey_alias)
     }
 
@@ -283,7 +283,7 @@ impl DetectionNode {
     }
 
     /// selectionをパースします。
-    fn parse_selection(&self, selection_yaml: &Yaml) -> Option<Box<dyn SelectionNode>> {
+    fn parse_selection(&self, selection_yaml: &Yaml) -> Option<SelectionNodeEnum> {
         Option::Some(Self::parse_selection_recursively(
             Nested::<String>::new(),
             selection_yaml,
@@ -291,10 +291,7 @@ impl DetectionNode {
     }
 
     /// selectionをパースします。
-    fn parse_selection_recursively(
-        key_list: Nested<String>,
-        yaml: &Yaml,
-    ) -> Box<dyn SelectionNode> {
+    fn parse_selection_recursively(key_list: Nested<String>, yaml: &Yaml) -> SelectionNodeEnum {
         if yaml.as_hash().is_some() {
             // 連想配列はAND条件と解釈する
             let yaml_hash = yaml.as_hash().unwrap();
@@ -307,7 +304,7 @@ impl DetectionNode {
                 let child_node = Self::parse_selection_recursively(child_key_list, child_yaml);
                 and_node.child_nodes.push(child_node);
             });
-            Box::new(and_node)
+            SelectionNodeEnum::And(and_node)
         } else if yaml.as_vec().is_some() {
             // 配列はOR条件と解釈する。
             let mut or_node = selectionnodes::OrSelectionNode::new();
@@ -316,10 +313,10 @@ impl DetectionNode {
                 or_node.child_nodes.push(child_node);
             });
 
-            Box::new(or_node)
+            SelectionNodeEnum::Or(or_node)
         } else {
             // 連想配列と配列以外は末端ノード
-            Box::new(selectionnodes::LeafSelectionNode::new(
+            SelectionNodeEnum::Leaf(selectionnodes::LeafSelectionNode::new(
                 key_list,
                 yaml.to_owned(),
             ))
