@@ -23,7 +23,7 @@
 
 # About Hayabusa
 
-Hayabusa is a **Windows event log fast forensics timeline generator** and **threat hunting tool** created by the [Yamato Security](https://yamatosecurity.connpass.com/) group in Japan. Hayabusa means ["peregrine falcon"](https://en.wikipedia.org/wiki/Peregrine_falcon) in Japanese and was chosen as peregrine falcons are the fastest animal in the world, great at hunting and highly trainable. It is written in [Rust](https://www.rust-lang.org/) and supports multi-threading in order to be as fast as possible. We have provided a [tool](https://github.com/Yamato-Security/hayabusa-rules/tree/main/tools/sigmac) to convert [Sigma](https://github.com/SigmaHQ/sigma) rules into Hayabusa rule format. The Sigma-compatible Hayabusa detection rules are written in YML in order to be as easily customizable and extensible as possible. Hayabusa can be run either on single running systems for live analysis, by gathering logs from single or multiple systems for offline analysis, or by running the [Hayabusa artifact](https://docs.velociraptor.app/exchange/artifacts/pages/windows.eventlogs.hayabusa/) with [Velociraptor](https://docs.velociraptor.app/) for enterprise-wide threat hunting and incident response. The output will be consolidated into a single CSV timeline for easy analysis in Excel, [Timeline Explorer](https://ericzimmerman.github.io/#!index.md), [Elastic Stack](doc/ElasticStackImport/ElasticStackImport-English.md), [Timesketch](https://timesketch.org/), etc...
+Hayabusa is a **Windows event log fast forensics timeline generator** and **threat hunting tool** created by the [Yamato Security](https://yamatosecurity.connpass.com/) group in Japan. Hayabusa means ["peregrine falcon"](https://en.wikipedia.org/wiki/Peregrine_falcon) in Japanese and was chosen as peregrine falcons are the fastest animal in the world, great at hunting and highly trainable. It is written in [Rust](https://www.rust-lang.org/) and supports multi-threading in order to be as fast as possible. We have provided a [tool](https://github.com/Yamato-Security/hayabusa-rules/tree/main/tools/sigmac) to convert [Sigma](https://github.com/SigmaHQ/sigma) rules into Hayabusa rule format. The Sigma-compatible Hayabusa detection rules are written in YML in order to be as easily customizable and extensible as possible. Hayabusa can be run either on single running systems for live analysis, by gathering logs from single or multiple systems for offline analysis, or by running the [Hayabusa artifact](https://docs.velociraptor.app/exchange/artifacts/pages/windows.eventlogs.hayabusa/) with [Velociraptor](https://docs.velociraptor.app/) for enterprise-wide threat hunting and incident response. The output will be consolidated into a single CSV timeline for easy analysis in Excel, [Timeline Explorer](https://ericzimmerman.github.io/#!index.md), [Elastic Stack](https://www.elastic.co/elastic-stack/), [Timesketch](https://timesketch.org/), etc...
 
 # Companion Projects
 
@@ -53,7 +53,6 @@ Hayabusa is a **Windows event log fast forensics timeline generator** and **thre
   - [Analysis with the Elastic Stack Dashboard](#analysis-with-the-elastic-stack-dashboard)
   - [Analysis in Timesketch](#analysis-in-timesketch)
 - [Importing and Analyzing Timeline Results](#importing-and-analyzing-timeline-results)
-- [Analyzing JSON-formatted results with JQ](#analyzing-json-formatted-results-with-jq)
 - [Features](#features)
 - [Downloads](#downloads)
 - [Git Cloning](#git-cloning)
@@ -144,67 +143,63 @@ Windows event log analysis has traditionally been a very long and tedious proces
 Hayabusa's goal is to extract out only useful data and present it in a concise as possible easy-to-read format that is usable not only by professionally trained analysts but any Windows system administrator.
 Hayabusa hopes to let analysts get 80% of their work done in 20% of the time when compared to traditional Windows event log analysis.
 
-![DFIR Timeline](doc/DFIR-TimelineCreation-EN.png)
+![DFIR Timeline](docs/Images/EN/DFIR-TimelineCreation-EN.png)
 
 # Screenshots
 
 ## Startup
 
-![Hayabusa Startup](screenshots/Hayabusa-Startup.png)
+![Hayabusa Startup](docs/Images/HayabusaStartup.png)
 
 ## Terminal Output
 
-![Hayabusa terminal output](screenshots/Hayabusa-Results.png)
+![Hayabusa terminal output](docs/Images/HayabusaResults.png)
 
 ## Event Fequency Timeline (`-T` option)
 
-![Hayabusa Event Frequency Timeline](screenshots/HayabusaEventFrequencyTimeline.png)
+![Hayabusa Event Frequency Timeline](docs/Images/HayabusaEventFrequencyTimeline.png)
 
 ## Results Summary
 
-![Hayabusa results summary](screenshots/HayabusaResultsSummary.png)
+![Hayabusa results summary](docs/Images/HayabusaResultsSummary.png)
 
 ## HTML Results Summary (`-H` option)
 
-![Hayabusa results summary](screenshots/HTML-ResultsSummary-1.png)
+![Hayabusa results summary](docs/Images/HTML-ResultsSummary-1.png)
 
-![Hayabusa results summary](screenshots/HTML-ResultsSummary-2.png)
+![Hayabusa results summary](docs/Images/HTML-ResultsSummary-2.png)
 
-![Hayabusa results summary](screenshots/HTML-ResultsSummary-3.png)
+![Hayabusa results summary](docs/Images/HTML-ResultsSummary-3.png)
 
 ## Analysis in Excel
 
-![Hayabusa analysis in Excel](screenshots/ExcelScreenshot.png)
+![Hayabusa analysis in Excel](docs/Images/ExcelScreenshot.png)
 
 ## Analysis in Timeline Explorer
 
-![Hayabusa analysis in Timeline Explorer](screenshots/TimelineExplorer-ColoredTimeline.png)
+![Hayabusa analysis in Timeline Explorer](docs/Images/TimelineExplorer-ColoredTimeline.png)
 
 ## Critical Alert Filtering and Computer Grouping in Timeline Explorer
 
-![Critical alert filtering and computer grouping in Timeline Explorer](screenshots/TimelineExplorer-CriticalAlerts-ComputerGrouping.png)
+![Critical alert filtering and computer grouping in Timeline Explorer](docs/Images/TimelineExplorer-CriticalAlerts-ComputerGrouping.png)
 
 ## Analysis with the Elastic Stack Dashboard
 
-![Elastic Stack Dashboard 1](doc/ElasticStackImport/17-HayabusaDashboard-1.png)
+![Elastic Stack Dashboard 1](docs/OtherToolAnalysis/ElasticStack/17-HayabusaDashboard-1.png)
 
-![Elastic Stack Dashboard 2](doc/ElasticStackImport/18-HayabusaDashboard-2.png)
+![Elastic Stack Dashboard 2](docs/OtherToolAnalysis/ElasticStack/18-HayabusaDashboard-2.png)
 
 ## Analysis in Timesketch
 
-![Timesketch](screenshots/TimesketchAnalysis.png)
+![Timesketch](docs/Images/TimesketchAnalysis.png)
 
 # Importing and Analyzing Timeline Results
 
-You can learn how to analyze CSV timelines in Excel and Timeline Explorer [here](doc/CSV-AnalysisWithExcelAndTimelineExplorer-English.pdf).
-
-You can learn how to import CSV files into Elastic Stack [here](doc/ElasticStackImport/ElasticStackImport-English.md).
-
-You can learn how to import CSV files into Timesketch [here](doc/TimesketchImport/TimesketchImport-English.md).
-
-# Analyzing JSON-formatted results with JQ
-
-You can learn how to analyze JSON-formatted results with `jq` [here](doc/AnalysisWithJQ-English.md).
+* You can learn how to analyze CSV results in LibreOffice [here](docs/CSV-Analysis/LibreOfficeAnalysis-English.md).
+* You can learn how to analyze CSV results in Timeline Explorer [here](docs/CSV-Analysis/TimelineExplorerAnalysis-English.md).
+* You can learn how to import CSV results into Elastic Stack [here](docs/OtherToolAnalysis/ElasticStack/ElasticStackImport-English.md).
+* You can learn how to import CSV results into Timesketch [here](docs/OtherToolAnalysis/Timesketch/TimesketchImport-English.md).
+* You can learn how to analyze JSON results with `jq` [here](docs/JSON-Analysis/AnalysisWithJQ-English.md).
 
 # Features
 
@@ -226,7 +221,7 @@ You can learn how to analyze JSON-formatted results with `jq` [here](doc/Analysi
 * Output to CSV, JSON/JSONL and HTML Summary Reports.
 * Daily Sigma rule updates.
 * Support for JSON-formatted log input.
-* Log field normalization. (Converting multiple fields with different naming conventions into the same field name.)
+* Log field normalization.
 * Log enrichment by adding GeoIP (ASN, city, country) information to IP addresses.
 
 # Downloads
@@ -391,11 +386,11 @@ Then, try to run it from the Hayabusa root directory:
 
 On the latest version of macOS, you may receive the following security error when you try to run it:
 
-![Mac Error 1 EN](screenshots/MacOS-RunError-1-EN.png)
+![Mac Error 1 EN](docs/Images/MacOS-RunError-1-EN.png)
 
 Click "Cancel" and then from System Preferences, open "Security & Privacy" and from the General tab, click "Allow Anyway".
 
-![Mac Error 2 EN](screenshots/MacOS-RunError-2-EN.png)
+![Mac Error 2 EN](docs/Images/MacOS-RunError-2-EN.png)
 
 After that, try to run it again.
 
@@ -405,7 +400,7 @@ After that, try to run it again.
 
 The following warning will pop up, so please click "Open".
 
-![Mac Error 3 EN](screenshots/MacOS-RunError-3-EN.png)
+![Mac Error 3 EN](docs/Images/MacOS-RunError-3-EN.png)
 
 You should now be able to run hayabusa.
 
@@ -1319,13 +1314,13 @@ To create the most forensic evidence and detect with the highest accuracy, you n
 
 ## English
 
-* 2023/03/14 [Rust Performance Guide for Hayabusa Developers](doc/RustPerformance-English.md) by Fukusuke Takahashi
+* 2023/03/14 [Rust Performance Guide for Hayabusa Developers](docs/DevelopersDocs/PerformanceGuide/RustPerformance-English.md) by Fukusuke Takahashi
 * 2022/06/19 [Velociraptor Walkthrough and Hayabusa Integration](https://www.youtube.com/watch?v=Q1IoGX--814) by [Eric Capuano](https://twitter.com/eric_capuano)
 * 2022/01/24 [Graphing Hayabusa results in neo4j](https://www.youtube.com/watch?v=7sQqz2ek-ko) by Matthew Seyer ([@forensic_matt](https://twitter.com/forensic_matt))
 
 ## Japanese
 
-* 2022/03/14 [Rust Performance Guide for Hayabusa Developers](doc/RustPerformance-Japanese.md) by Fukusuke Takahashi
+* 2022/03/14 [Rust Performance Guide for Hayabusa Developers](docs/DevelopersDocs/PerformanceGuide/RustPerformance-Japanese.md) by Fukusuke Takahashi
 * 2022/01/22 [Visualizing Hayabusa results in Elastic Stack](https://qiita.com/kzzzzo2/items/ead8ccc77b7609143749) by [@kzzzzo2](https://qiita.com/kzzzzo2)
 * 2021/12/31 [Intro to Hayabusa](https://itib.hatenablog.com/entry/2021/12/31/222946) by itiB ([@itiB_S144](https://twitter.com/itiB_S144))
 * 2021/12/27 [Hayabusa internals](https://kazuminkun.hatenablog.com/entry/2021/12/27/190535) by Kazuminn ([@k47_um1n](https://twitter.com/k47_um1n))
