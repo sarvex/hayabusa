@@ -1,30 +1,30 @@
 # Analysing Hayabusa Results with LibreOffice
 
-# Table of Contents
+# 目次
 
 - [Analysing Hayabusa Results with LibreOffice](#analysing-hayabusa-results-with-libreoffice)
-- [Table of Contents](#table-of-contents)
-- [Author](#author)
-- [About](#about)
-- [Installing LibreOffice](#installing-libreoffice)
-- [About the CSV Formatted Results File](#about-the-csv-formatted-results-file)
+- [目次](#目次)
+- [著者](#著者)
+- [このドキュメントについて](#このドキュメントについて)
+- [LibreOfficeのインストール](#libreofficeのインストール)
+- [CSV形式の結果ファイルについて](#csv形式の結果ファイルについて)
 - [Creating CSV Results Files](#creating-csv-results-files)
   - [Benefits of Using Details Over AllFieldInfo](#benefits-of-using-details-over-allfieldinfo)
 - [Importing the CSV Results File](#importing-the-csv-results-file)
 
-# Author
+# 著者
 
-Zach Mathis ([@yamatosecurity](https://twitter.com/yamatosecurity)) - 2023/03/24
+田中ザック ([@yamatosecurity](https://twitter.com/yamatosecurity)) - 2023/03/24
 
-# About
+# このドキュメントについて
 
 These instructions will also apply to Excel but LibreOffice is used as an example as it is free and can do everything needed for analysis.
 
-# Installing LibreOffice
+# LibreOfficeのインストール
 
 Install LibreOffice from the [download page](https://www.libreoffice.org/download/download-libreoffice/).
 
-# About the CSV Formatted Results File
+# CSV形式の結果ファイルについて
 
 Columns are delimited by commas.
 Numbers like the `EventID` and `RecordNumber` and outputted as is.
